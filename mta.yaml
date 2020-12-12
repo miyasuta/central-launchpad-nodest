@@ -1,0 +1,81 @@
+_schema-version: "3.2"
+ID: no-destination
+version: 0.0.1
+modules:
+- name: no-destination-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: uaa_no-destination
+    parameters:
+      service-key:
+        name: uaa_no-destination-key
+  - name: no-destination_html_repo_host
+    parameters:
+      service-key:
+        name: no-destination_html_repo_host-key
+  - name: no-destination-destination-service
+    parameters:
+      content-target: true
+  parameters:
+    content:
+      subaccount:
+        destinations:
+        - Name: my_service_no_destination_html_repo_host
+          ServiceInstanceName: no-destination-html5-app-host-service
+          ServiceKeyName: no-destination_html_repo_host-key
+          sap.cloud.service: my_service
+        - Authentication: OAuth2UserTokenExchange
+          Name: my_service_uaa_no_destination
+          ServiceInstanceName: no-destination-xsuaa-service
+          ServiceKeyName: uaa_no-destination-key
+          sap.cloud.service: my_service
+        existing_destinations_policy: update
+  build-parameters:
+    no-source: true
+- name: no-destination_ui_deployer
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: no-destination_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - HTML5Module-content.zip
+      name: HTML5Module
+      target-path: resources/
+- name: HTML5Module
+  type: html5
+  path: HTML5Module
+  build-parameters:
+    builder: custom
+    commands:
+    - npm run build
+    supported-platforms: []
+resources:
+- name: no-destination-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: destination
+    service-name: no-destination-destination-service
+    service-plan: lite
+- name: no-destination_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: no-destination-html5-app-host-service
+    service-plan: app-host
+- name: uaa_no-destination
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: no-destination-xsuaa-service
+    service-plan: application
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm install
